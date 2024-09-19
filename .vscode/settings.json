@@ -1,0 +1,11 @@
+{
+    "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+    },
+    "solidity.packageDefaultDependenciesDirectory": ["node_modules", "lib"],
+    "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+    "solidity.validationDelay": 1500,
+    "solidity.linter": "solhint"
+}
