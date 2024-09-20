@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract RaffleTest is Test {
     /**  Event */
@@ -144,8 +145,107 @@ contract RaffleTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
-        ENOUGH TIME HAS PASSED AND WE CAN SELECT A WINNER
+        ENOUGH TIME HAS PASSED AND UPKEEP RETURNS TRUE
+    //////////////////////////////////////////////////////////////*/
+    function testCheckUpkeepReturnsFalseIfEnoughTimeHasNotPassed() public {
+        // Arrange
+        vm.prank(player);
+        vm.warp(block.timestamp);
+        vm.roll(block.number);
+        raffle.enterRaffle{value: entranceFee}();
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+
+        // Assert
+        assert(!upkeepNeeded);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+        ENOUGH TIME HAS PASSED AND UPKEEP RETURNS TRUE
     //////////////////////////////////////////////////////////////*/
 
-    
+    function testUpkeepReturnsTrueWhenParametersAreGood() public {
+        // Arrange
+        vm.prank(player);
+        // Enough time has passed
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        // Add Money to contract by adding players in the raffle
+        raffle.enterRaffle{value: entranceFee}();
+
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+
+        // Assert
+        assert(upkeepNeeded);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+        PERFORM UPKEEP
+    //////////////////////////////////////////////////////////////*/
+
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() public {
+        // Arrange
+        vm.prank(player);
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.enterRaffle{value: entranceFee}();
+        // Act / Assert
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepDoesNotRunIfCheckUpkeepIsFalse() public {
+        uint256 balance = 0;
+        uint256 numPlayers = 0;
+        Raffle.RaffleState rState = raffle.getRaffleState();
+
+        // Arrange
+        vm.prank(player);
+        vm.warp(block.timestamp);
+        vm.roll(block.number);
+        raffle.enterRaffle{value: entranceFee}();
+
+        numPlayers = 1;
+        balance = balance + entranceFee;
+        // Act
+        //  ==> since checkUpkeep fails here, performUpkeep is going to revert.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__NotUpkeepNeeded.selector,
+                balance,
+                rState,
+                numPlayers
+            )
+        );
+        raffle.performUpkeep("");
+    }
+
+    modifier raffleEntered() {
+        vm.prank(player);
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.enterRaffle{value: entranceFee}();
+        _;
+    }
+
+    function testPerformUpkeepUpdatesRaffleStateAndEmitRequestId()
+        public
+        raffleEntered
+    {
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        bytes32 requestId = entries[1].topics[1];
+
+        // Assert
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+
+        assert(uint256(requestId) > 0);
+        assert(uint256(raffleState) == 1);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             FULLFIL RANDOMWORDS
+    //////////////////////////////////////////////////////////////*/
 }

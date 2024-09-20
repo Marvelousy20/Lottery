@@ -63,6 +63,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     event EnteredRaffle(address indexed player);
     event WinnerPicked(address indexed winner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 entranceFee,
@@ -152,6 +153,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             })
         );
+
+        // This is redundant since the VRFCoordinator already emits this event.
+        emit RequestedRaffleWinner(requestId);
     }
 
     /** This function is what happens after the request has been made successfully? The fufillRandomWords function needs to be callsed */
@@ -211,5 +215,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getParticipants(uint256 index) public view returns (address) {
         return s_participants[index];
+    }
+
+    function getParticipantsLength() public returns (uint256) {
+        return s_participants.length;
     }
 }
