@@ -36,6 +36,7 @@ contract HelperConfig is CodeConstants, Script {
         bytes32 keyHash;
         uint32 callbackGasLimit;
         address link;
+        address account;
     }
     NetworkConfig public localNetworkConfig;
     mapping(uint256 chainId => NetworkConfig) public networkConfigs;
@@ -85,7 +86,8 @@ contract HelperConfig is CodeConstants, Script {
             vrfCoordinator2_5: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             callbackGasLimit: 500000, // 500,000 gas
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0x78fCFee041799aFb72CF26a142BC5834a21A3D4D
         });
     }
 
@@ -100,7 +102,8 @@ contract HelperConfig is CodeConstants, Script {
             vrfCoordinator2_5: 0x271682DEB8C4E0901D1a1550aD2e64D568E69909,
             keyHash: 0x9fe0eebf5e446e3c998ec9bb19951541aee00bb90ea201ae456421a2ded86805,
             callbackGasLimit: 500000, // 500,000 gas
-            link: 0x514910771AF9Ca656af840dff83E8264EcF986CA
+            link: 0x514910771AF9Ca656af840dff83E8264EcF986CA,
+            account: 0x78fCFee041799aFb72CF26a142BC5834a21A3D4D
 
             // subscriptionId: 0, // If left as 0, our scripts will create one!
             // keyHash: 0x9fe0eebf5e446e3c998ec9bb19951541aee00bb90ea201ae456421a2ded86805,
@@ -134,7 +137,8 @@ contract HelperConfig is CodeConstants, Script {
             vrfCoordinator2_5: address(VrfCoordinatorMock),
             keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             callbackGasLimit: 500000, // 500,000 gas
-            link: address(link)
+            link: address(link),
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
         });
 
         return localNetworkConfig;

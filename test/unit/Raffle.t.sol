@@ -8,8 +8,9 @@ import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {LinkToken} from "test/mocks/LinkToken.sol";
+import {CodeConstants} from "../../script/HelperConfig.s.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is Test, CodeConstants {
     /**  Event */
 
     event EnteredRaffle(address indexed player);
@@ -94,7 +95,7 @@ contract RaffleTest is Test {
 
         vm.expectEmit(true, false, false, false, address(raffle));
         // we manually emit the event and call the function that emits the event
-
+        emit EnteredRaffle(player);
         // We perform the call here.
         raffle.enterRaffle{value: entranceFee}();
     }
@@ -138,13 +139,16 @@ contract RaffleTest is Test {
         vm.prank(player);
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
-        raffle.performUpkeep("");
         raffle.enterRaffle{value: entranceFee}();
+
+        raffle.performUpkeep("");
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
 
         // Act
         (bool upkeepNeeded, ) = raffle.checkUpkeep("");
 
         // Assert
+        assert(raffleState == Raffle.RaffleState.CALCULATING);
         assert(!upkeepNeeded);
     }
 
@@ -232,9 +236,17 @@ contract RaffleTest is Test {
         _;
     }
 
+    modifier skipFork() {
+        if (block.chainid != LOCAL_CHAIN_ID) {
+            return;
+        }
+        _;
+    }
+
     function testPerformUpkeepUpdatesRaffleStateAndEmitRequestId()
         public
         raffleEntered
+        skipFork
     {
         vm.recordLogs();
         raffle.performUpkeep("");
@@ -255,7 +267,7 @@ contract RaffleTest is Test {
 
     function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 randomRequestId
-    ) public raffleEntered {
+    ) public raffleEntered skipFork {
         // Arrange / Act / Assert
         vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
         VRFCoordinatorV2_5Mock(vrfCoordinator2_5).fulfillRandomWords(
@@ -271,6 +283,7 @@ contract RaffleTest is Test {
     function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney()
         public
         raffleEntered
+        skipFork
     {
         // Arrange
         // We want to similate multple players to enter the lotter;

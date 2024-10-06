@@ -9,7 +9,7 @@ import {CreateSubscription, FundSubscription, AddConsumer} from "./Interactions.
 contract DeployRaffle is Script {
     function run() public {
         // We have to do this if we want to run it as a script.
-        
+
         deployContract();
     }
 
@@ -40,7 +40,10 @@ contract DeployRaffle is Script {
             (
                 config.subscriptionId,
                 config.vrfCoordinator2_5
-            ) = createSubscription.createSubscription(config.vrfCoordinator2_5);
+            ) = createSubscription.createSubscription(
+                config.vrfCoordinator2_5,
+                config.account
+            );
 
             // Fund the subscription.
             FundSubscription fundSubscription = new FundSubscription();
@@ -48,11 +51,12 @@ contract DeployRaffle is Script {
             fundSubscription.fundSubscription(
                 config.vrfCoordinator2_5,
                 config.link,
-                config.subscriptionId
+                config.subscriptionId,
+                config.account
             );
         }
 
-        vm.startBroadcast();
+        vm.startBroadcast(config.account);
         Raffle raffle = new Raffle(
             config.entranceFee,
             config.interval,
@@ -64,13 +68,14 @@ contract DeployRaffle is Script {
         vm.stopBroadcast();
 
         // We only add consumer after the contract has been deoloyed since it is the latest deployed contract
-        //we are passing to the consumer function
+        // we are passing to the consumer function
 
         AddConsumer addConsumer = new AddConsumer();
         addConsumer.addConsumer(
             address(raffle),
             config.vrfCoordinator2_5,
-            config.subscriptionId
+            config.subscriptionId,
+            config.account
         );
 
         return (raffle, helperConfig);
